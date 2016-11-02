@@ -10,10 +10,9 @@ def render(camera, model):
     data.fill(255)
     img = Image.fromarray(data, 'RGB')
     draw = ImageDraw.Draw(img, 'RGB')
-    for triangle in model['triangles']:
+    for triangle, color in model['triangles']:
         points = map(point_to_pixel, triangle)
-        col = int(256 * r.random())
-        draw.polygon(points, (col, col, col))
+        draw.polygon(points, color)
     del draw
     img.save('out.png', 'PNG')
 
@@ -47,10 +46,16 @@ def parse_graphics_file(file_name):
         model['triangles'] = []
         for l in lines:
             if not l.startswith('#') and len(l) > 0:
-                triangle = parse_point_list(l)
-                if triangle is None:
+                parts = l.split(':')
+                triangle = parse_point_list(parts[0])
+                color = tuple(
+                    int(x) for x in parse_point_list(
+                        parts[1]
+                    )[0]
+                )
+                if triangle is None or color is None:
                     sys.exit('Bad model file %s' % file_name)
-                model['triangles'].append(triangle)
+                model['triangles'].append((triangle, color))
         return model
     sys.exit('Bad model file %s' % file_name)
 
