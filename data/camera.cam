@@ -1,0 +1,5 @@
+# near plane coordinates
+-1,-1,0 | -1,1,0 | 1,1,0 | 1,-1,0
+
+# far plane coordinates
+-100,-100,0 | -100,100,0 | 100,100,0 | 100,-100,0
