@@ -1,33 +1,42 @@
 import sys
+import time
 import numpy as np
-import random as r
 from PIL import Image, ImageDraw
 
 
 def render(camera, model):
-    print model
     data = np.zeros((600, 800, 3), dtype=np.uint8)
     data.fill(255)
     img = Image.fromarray(data, 'RGB')
     draw = ImageDraw.Draw(img, 'RGB')
     for triangle, color in model['triangles']:
-        points = map(point_to_pixel, triangle)
+        points = filter(
+            lambda x: x is not None,
+            map(point_to_pixel, triangle)
+        )
+        if len(points) < 3:
+            continue
         draw.polygon(points, color)
     del draw
     img.save('out.png', 'PNG')
 
+
 def point_to_pixel(raw_p):
     p = np.array(raw_p + [1])
-    cam_space = np.array([
+    cam_space = np.linalg.inv(np.array([
         [1., 0.,  0., 0.],
         [0., 1.,  0., 0.],
         [0., 0., -1., 0.],
-        [0., 0.,  0., 1.]
-    ])
-    near_plane_dist = 1.
+        [40., -90.,  -40., 1.]
+    ]))
+    near_plane_dist = 10.
     near_plane_width = 160.
     near_plane_height = 120.
-    p_cam = np.dot(cam_space, p)
+    p_cam = np.dot(p, cam_space)
+
+    if -p_cam[2] < near_plane_dist:
+        return None
+
     canv_x = -near_plane_dist * p_cam[0] / p_cam[2]
     canv_y = -near_plane_dist * p_cam[1] / p_cam[2]
     screen_width = 800
@@ -36,6 +45,10 @@ def point_to_pixel(raw_p):
     ndc_y = canv_y/near_plane_height + 0.5
     x = ndc_x * screen_width
     y = ndc_y * screen_height
+
+    if x > screen_width or y > screen_height or x < 0 or y < 0:
+        return None
+
     return (x, y)
 
 
