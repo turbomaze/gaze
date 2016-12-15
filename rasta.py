@@ -1,5 +1,5 @@
 import sys
-import time
+import math
 import numpy as np
 from PIL import Image, ImageDraw
 
@@ -23,12 +23,8 @@ def render(camera, model):
 
 def point_to_pixel(raw_p):
     p = np.array(raw_p + [1])
-    cam_space = np.linalg.inv(np.array([
-        [1., 0.,  0., 0.],
-        [0., 1.,  0., 0.],
-        [0., 0., -1., 0.],
-        [40., -90.,  -40., 1.]
-    ]))
+    cam_space = get_camera([40., -110., -60.], [0, 0, -1])
+
     near_plane_dist = 10.
     near_plane_width = 160.
     near_plane_height = 120.
@@ -50,6 +46,26 @@ def point_to_pixel(raw_p):
         return None
 
     return (x, y)
+
+
+def get_camera(pos, z_axis):
+    z_rot = math.atan2(z_axis[0], z_axis[2])
+    z_rot_matrix = np.array([
+        [math.cos(z_rot), 0, math.sin(z_rot), 0],
+        [0, 1, 0, 0],
+        [-math.sin(z_rot), 0, math.cos(z_rot), 0],
+        [0, 0, 0, 1]
+    ])
+    x_axis = np.dot(z_rot_matrix, np.array([1, 0, 0, 0]))
+    y_axis = np.dot(z_rot_matrix, np.array([0, 1, 0, 0]))
+    cam_mat = np.array([
+        x_axis,
+        y_axis,
+        np.array(z_axis + [0]),
+        np.array(pos + [1])
+    ])
+    print cam_mat
+    return np.linalg.inv(cam_mat)
 
 
 def parse_graphics_file(file_name):
