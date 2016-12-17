@@ -23,9 +23,9 @@ def render(camera, model):
 
 def point_to_pixel(raw_p):
     p = np.array(raw_p + [1])
-    cam_space = get_camera([40., -110., -60.], [0, 0, -1])
+    cam_space = get_camera([0, 0., -15.], [0, 0, -1])
 
-    near_plane_dist = 10.
+    near_plane_dist = 5.
     near_plane_width = 160.
     near_plane_height = 120.
     p_cam = np.dot(p, cam_space)
@@ -49,21 +49,40 @@ def point_to_pixel(raw_p):
 
 
 def get_camera(pos, z_axis):
-    z_rot = math.atan2(z_axis[0], z_axis[2])
-    z_rot_matrix = np.array([
-        [math.cos(z_rot), 0, math.sin(z_rot), 0],
+    z_axis = z_axis / np.linalg.norm(np.array(z_axis))
+    z_axis = np.append(z_axis, 0)
+
+    # get y rotation
+    y_rot = math.atan2(z_axis[0], z_axis[2])
+    y_rot_matrix = np.array([
+        [math.cos(y_rot), 0, math.sin(y_rot), 0],
         [0, 1, 0, 0],
-        [-math.sin(z_rot), 0, math.cos(z_rot), 0],
+        [-math.sin(y_rot), 0, math.cos(y_rot), 0],
         [0, 0, 0, 1]
     ])
-    x_axis = np.dot(z_rot_matrix, np.array([1, 0, 0, 0]))
-    y_axis = np.dot(z_rot_matrix, np.array([0, 1, 0, 0]))
+
+    # apply the y rotation to reduce the z axis
+    z_axis_ = np.dot(y_rot_matrix, z_axis)
+
+    # compute the x rotation
+    x_rot = math.atan2(z_axis_[1], z_axis_[2])
+    x_rot_matrix = np.array([
+        [1, 0, 0, 0],
+        [0, math.cos(x_rot), math.sin(x_rot), 0],
+        [0, -math.sin(x_rot), math.cos(x_rot), 0],
+        [0, 0, 0, 1]
+    ])
+    x_axis = np.dot(y_rot_matrix, np.array([1, 0, 0, 0]))
+    x_axis = np.dot(x_rot_matrix, x_axis)
+    y_axis = np.dot(y_rot_matrix, np.array([0, 1, 0, 0]))
+    y_axis = np.dot(x_rot_matrix, y_axis)
     cam_mat = np.array([
         x_axis,
         y_axis,
-        np.array(z_axis + [0]),
+        np.array(z_axis),
         np.array(pos + [1])
     ])
+    print y_rot, x_rot
     print cam_mat
     return np.linalg.inv(cam_mat)
 
