@@ -17,7 +17,10 @@ def render(camera, model):
         )
         if len(points) < 3:
             continue
-        draw.polygon(points, color)
+        if 'outline' in model and model['outline'] is True:
+            draw.polygon(points, outline=color)
+        else:
+            draw.polygon(points, fill=color)
     del draw
     img.save('out.png', 'PNG')
 
@@ -141,7 +144,7 @@ def parse_point_list(points):
         return None
 
 
-def get_box(pos, l, w, h, color=False):
+def get_box(pos, l, w, h, color=False, outline=False):
     triangles = []
     points = [
         [i >> 2, (i >> 1) & 1, i & 1] for i in range(2**3)
@@ -180,14 +183,18 @@ def get_box(pos, l, w, h, color=False):
         triangles.append(([pa, pb, pc], color1))
         triangles.append(([pa, pc, pd], color2))
 
-    return {'triangles': triangles}
+    return {'triangles': triangles, 'outline': outline}
 
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
-        sys.exit('Usage: %s CAMERA_FILE_NAME MODEL_FILE_NAME' % sys.argv[0])
+        sys.exit('Usage: %s CAMERA_FILE_NAME' % sys.argv[0])
 
     camera = parse_camera_file(sys.argv[1])
-    model = parse_graphics_file(sys.argv[2])
-    model = get_box([0, 0, 0], 40, 40, 40)
+    model = get_box(
+        [0, 0, 0],
+        40, 40, 40,
+        color=(255, 0, 0),
+        outline=True
+    )
     render(camera, model)
