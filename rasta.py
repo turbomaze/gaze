@@ -165,15 +165,28 @@ def get_box(pos, l, w, h, color=False, outline=False):
     return {'triangles': triangles}
 
 
+def merge_models(models):
+    model = {'triangles': []}
+    for submodel in models:
+        model['triangles'] += submodel['triangles']
+    return model
+
 if __name__ == '__main__':
     if len(sys.argv) < 3:
         sys.exit('Usage: %s CAMERA_FILE_NAME' % sys.argv[0])
 
     camera = parse_camera_file(sys.argv[1])
-    model = get_box(
+    box1 = get_box(
         [0, 0, 0],
         40, 40, 40,
         color=(255, 0, 0),
         outline=True
     )
+    box2 = get_box(
+        [-70, 20, 10],
+        40, 40, 40,
+        color=(255, 0, 0),
+        outline=True
+    )
+    model = merge_models([box1, box2])
     render(camera, model)
