@@ -10,14 +10,14 @@ def render(camera, model):
     img = Image.fromarray(data, 'RGB')
     draw = ImageDraw.Draw(img, 'RGB')
     # print model
-    for triangle, color in model['triangles']:
+    for triangle, color, outline in model['triangles']:
         points = filter(
             lambda x: x is not None,
             map(point_to_pixel, triangle)
         )
         if len(points) < 3:
             continue
-        if 'outline' in model and model['outline'] is True:
+        if outline:
             draw.polygon(points, outline=color)
         else:
             draw.polygon(points, fill=color)
@@ -90,27 +90,6 @@ def get_camera(pos, z_axis):
     return np.linalg.inv(cam_mat)
 
 
-def parse_graphics_file(file_name):
-    with open(file_name) as file:
-        lines = [l.rstrip('\n') for l in file.readlines()]
-        model = {}
-        model['triangles'] = []
-        for l in lines:
-            if not l.startswith('#') and len(l) > 0:
-                parts = l.split(':')
-                triangle = parse_point_list(parts[0])
-                color = tuple(
-                    int(x) for x in parse_point_list(
-                        parts[1]
-                    )[0]
-                )
-                if triangle is None or color is None:
-                    sys.exit('Bad model file %s' % file_name)
-                model['triangles'].append((triangle, color))
-        return model
-    sys.exit('Bad model file %s' % file_name)
-
-
 def parse_camera_file(file_name):
     with open(file_name) as file:
         lines = filter(
@@ -180,10 +159,10 @@ def get_box(pos, l, w, h, color=False, outline=False):
         ])
 
         pa, pb, pc, pd = [points[x] for x in face]
-        triangles.append(([pa, pb, pc], color1))
-        triangles.append(([pa, pc, pd], color2))
+        triangles.append(([pa, pb, pc], color1, outline))
+        triangles.append(([pa, pc, pd], color2, outline))
 
-    return {'triangles': triangles, 'outline': outline}
+    return {'triangles': triangles}
 
 
 if __name__ == '__main__':
