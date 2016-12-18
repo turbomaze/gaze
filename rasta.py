@@ -5,15 +5,17 @@ from PIL import Image, ImageDraw
 
 
 def render(camera, model):
+    # prep the canvas
     data = np.zeros((600, 800, 3), dtype=np.uint8)
     data.fill(255)
     img = Image.fromarray(data, 'RGB')
     draw = ImageDraw.Draw(img, 'RGB')
+
     # print model
     for triangle, color, outline in model['triangles']:
         points = filter(
             lambda x: x is not None,
-            map(point_to_pixel, triangle)
+            map(lambda t: point_to_pixel(camera, t), triangle)
         )
         if len(points) < 3:
             continue
@@ -25,14 +27,13 @@ def render(camera, model):
     img.save('out.png', 'PNG')
 
 
-def point_to_pixel(raw_p):
+def point_to_pixel(camera, raw_p):
     p = np.array(raw_p + [1])
-    cam_space = get_camera([10, 10, 10.], [0, 0, -1])
 
-    near_plane_dist = 5.
-    near_plane_width = 160.
-    near_plane_height = 120.
-    p_cam = np.dot(p, cam_space)
+    near_plane_dist = camera['near_plane_dist']
+    near_plane_width = camera['near_plane_width']
+    near_plane_height = camera['near_plane_height']
+    p_cam = np.dot(p, camera['cam_mat'])
 
     if -p_cam[2] < near_plane_dist:
         return None
@@ -97,17 +98,22 @@ def parse_camera_file(file_name):
             [l.rstrip('\n') for l in file.readlines()]
         )
 
-        if len(lines) < 2:
+        if len(lines) < 3:
             sys.exit('Bad camera file %s' % file_name)
 
-        near_plane = parse_point_list(lines[0])
-        far_plane = parse_point_list(lines[1])
-        if near_plane is None or far_plane is None:
+        near_plane_info = parse_point_list(lines[0])[0]
+        pos = parse_point_list(lines[1])[0]
+        z_axis = parse_point_list(lines[2])[0]
+        if near_plane_info is None:
+            sys.exit('Bad camera file %s' % file_name)
+        if pos is None or z_axis is None:
             sys.exit('Bad camera file %s' % file_name)
 
         return {
-            'near_plane': near_plane,
-            'far_plane': far_plane,
+            'near_plane_dist': near_plane_info[0],
+            'near_plane_width': near_plane_info[1],
+            'near_plane_height': near_plane_info[2],
+            'cam_mat': get_camera(pos, z_axis)
         }
     sys.exit('Bad camera file %s' % file_name)
 
@@ -172,7 +178,7 @@ def merge_models(models):
     return model
 
 if __name__ == '__main__':
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 2:
         sys.exit('Usage: %s CAMERA_FILE_NAME' % sys.argv[0])
 
     camera = parse_camera_file(sys.argv[1])
