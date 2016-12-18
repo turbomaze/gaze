@@ -20,24 +20,29 @@ def render(camera, model):
         if len(points) < 3:
             continue
 
+        # get the face center and normal
+        center = get_center(face)
+        normal = get_normal(face)
+
         # draw the polygon
-        if outline:
-            draw.polygon(points, outline=color)
-        else:
-            draw.polygon(points, fill=color)
+        if is_facing(center, camera['eye'], normal):
+            if outline:
+                draw.polygon(points, outline=color)
+            else:
+                draw.polygon(points, fill=color)
+
 
         # draw the normal
-        k = 50
-        normal = get_normal(face)
-        center = get_center(face)
-        center_ = np.add(center, k * normal)
-        center_p = point_to_pixel(camera, center.tolist())
-        center_p_ = point_to_pixel(camera, center_.tolist())
-        if center_p is not None and center_p_ is not None:
-            draw.line((
-                center_p[0], center_p[1],
-                center_p_[0], center_p_[1]
-            ), fill=(0, 0, 255), width=2)
+        if True:
+            k = 50
+            center_ = np.add(center, k * normal)
+            center_p = point_to_pixel(camera, center.tolist())
+            center_p_ = point_to_pixel(camera, center_.tolist())
+            if center_p is not None and center_p_ is not None:
+                draw.line((
+                    center_p[0], center_p[1],
+                    center_p_[0], center_p_[1]
+                ), fill=(0, 0, 255), width=2)
 
     del draw
     img.save('out.png', 'PNG')
@@ -58,8 +63,12 @@ def get_center(face):
     return center
 
 
+def is_facing(center, eye, normal):
+    return np.dot(np.subtract(-center, eye), normal) > 0
+
+
+
 def point_to_pixel(camera, raw_p):
-    print raw_p
     p = np.array(raw_p + [1])
 
     near_plane_dist = camera['near_plane_dist']
@@ -223,4 +232,4 @@ if __name__ == '__main__':
         outline=True
     )
     model = merge_models([box1, box2])
-    render(camera, box1)
+    render(camera, model)
