@@ -4,7 +4,11 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 
-def render(camera, model, screen_width, screen_height):
+def render(
+    camera, models,
+    global_offset, global_scale,
+    screen_width, screen_height
+):
     # prep the canvas
     data = np.zeros(
         (screen_height, screen_width, 3),
@@ -14,12 +18,21 @@ def render(camera, model, screen_width, screen_height):
     img = Image.fromarray(data, 'RGB')
     draw = ImageDraw.Draw(img, 'RGB')
 
+    # iterate the model faces
+    model = merge_models(models)
     for face, color, outline in model['faces']:
+        # apply the global offset
+        face = [[
+            global_scale[0] * point[0] + global_offset[0],
+            global_scale[1] * point[1] + global_offset[1],
+            global_scale[2] * point[2] + global_offset[2]
+        ] for point in face]
+
         # get the screen coordinates of the vertices
         points = filter(
             lambda x: x is not None,
-            map(lambda f: point_to_pixel(
-                camera, f, screen_width, screen_height
+            map(lambda point: point_to_pixel(
+                camera, point, screen_width, screen_height
             ), face)
         )
         if len(points) < 3:
@@ -231,23 +244,23 @@ if __name__ == '__main__':
         sys.exit('Usage: %s CAMERA_FILE_NAME' % sys.argv[0])
 
     camera = parse_camera_file(sys.argv[1])
+    global_offset = [-84., -62., 0.]
+    global_scale = [12.6, 12.6, 10.]
     boundary = get_box(
-        [-84, -62, 0],
-        168, 126, 100,
+        [0, 0, 0],
+        13.3333, 10, 10,
         color=(0, 0, 0),
         outline=True
     )
-    box1 = get_box(
-        [-84, 54, 90],
-        10, 10, 10,
+    models = [boundary]
+    models.append(get_box(
+        [0, 0, 0],
+        1, 1, 1,
         color=(255, 0, 0),
         outline=False
+    ))
+    render(
+        camera, models,
+        global_offset, global_scale,
+        800, 600
     )
-    box2 = get_box(
-        [-70, 20, 10],
-        40, 40, 40,
-        color=(255, 0, 0),
-        outline=False
-    )
-    model = merge_models([boundary, box1])
-    render(camera, model, 800, 600)
