@@ -245,7 +245,7 @@ class Rasta(object):
                     np.subtract(point, center)
                 )
                 points.append(np.add(point_, center))
-            face_ = (points, face[1], face[2])
+            face_ = [points, face[1], face[2]]
             box_['faces'].append(face_)
 
         return box_
@@ -278,13 +278,23 @@ class Rasta(object):
                     ), 0) for _ in range(3)
                 ])
 
-            faces.append((
+            faces.append([
                 [points[x] for x in face_by_points],
                 color,
                 outline
-            ))
+            ])
 
         return {'faces': faces}
+
+    @classmethod
+    def get_boundary_box(cls):
+        boundary = Rasta.get_box(
+            [0, 0, 0],
+            13.3333, 10, 10,
+            color=(0, 0, 0),
+            outline=True
+        )
+        return boundary
 
     @classmethod
     def merge_models(cls, models):
