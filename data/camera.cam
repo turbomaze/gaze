@@ -1,5 +1,8 @@
-# near plane coordinates
--1,-1,0 | -1,1,0 | 1,1,0 | 1,-1,0
+# near, far, aspect, fovy
+1,100,1.3333,2.8
 
-# far plane coordinates
--100,-100,0 | -100,100,0 | 100,100,0 | 100,-100,0
+# eye
+0,0,12
+
+# at
+0,0,-1
