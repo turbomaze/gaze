@@ -23,7 +23,7 @@ class Rasta(object):
         self.screen_width = screen_width
         self.screen_height = screen_height
 
-    def render(self, models, out_file):
+    def render(self, models):
         # prep the canvas
         data = np.zeros(
             (self.screen_height, self.screen_width, 3),
@@ -85,6 +85,10 @@ class Rasta(object):
                     draw.polygon(points, fill=lit_color)
 
         del draw
+        return img
+
+    def render_to_image(self, models, out_file):
+        img = self.render(models)
         img.save(out_file, 'PNG')
 
     def point_to_pixel(self, raw_p):
@@ -310,6 +314,9 @@ class Rasta(object):
 
     @classmethod
     def merge_models(cls, models):
+        if not isinstance(models, type([])):
+            return models
+
         model = {'faces': []}
         for submodel in models:
             model['faces'] += submodel['faces']

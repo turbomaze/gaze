@@ -9,6 +9,9 @@ import numpy as np
 
 
 class Scene(object):
+    num_viewer_params = 4
+    num_box_params = 3
+
     @classmethod
     def sample(cls, num_boxes):
         # hardcoded range parameters
@@ -18,31 +21,44 @@ class Scene(object):
         boxes = []
         for i in range(num_boxes):
             # generate random box
-            boxes.append([
+            boxes += [
                 np.random.uniform(0, x_range/2. - 1.),
                 np.random.uniform(0, y_range - 1.),
                 np.random.uniform(0, z_range - 1.)
-            ])
+            ]
 
         # get the viewer
         viewer_center = [0.75*x_range, 0, z_range/2.]
         target_box = np.random.choice(num_boxes)
         viewer = [
             np.random.normal(viewer_center[0], x_range/16.),
-            boxes[target_box][1],
+            boxes[cls.num_box_params*target_box + 1],
             np.random.normal(viewer_center[2], z_range/2.),
             target_box
         ]
         viewer[0] = min(x_range - 1., max(0, viewer[0]))
         viewer[2] = min(z_range - 1., max(0, viewer[2]))
 
-        return {
-            'viewer': viewer,
-            'boxes': boxes
-        }
+        return [num_boxes] + viewer + boxes
 
     @classmethod
-    def get_model_from_scene(cls, scene):
+    def get_model_from_latent(cls, latent):
+        viewer_offset = 1 + cls.num_viewer_params
+        scene = {
+            'num_boxes': int(latent[0]),
+            'viewer': latent[1:viewer_offset],
+            # go from a list to a list of lists
+            'boxes': [
+                latent[
+                    viewer_offset +
+                    cls.num_box_params * i:viewer_offset +
+                    cls.num_box_params * i + cls.num_box_params
+                ]
+                for i in range(int(latent[0]))
+            ]
+        }
+        scene['viewer'][3] = int(scene['viewer'][3])
+
         boxes = []
 
         v1 = scene['boxes'][scene['viewer'][3]]

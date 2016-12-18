@@ -14,4 +14,4 @@ models.append(Rasta.rotate_box(Rasta.get_box(
     outline=False
 ), 3.14/3))
 
-rasta.render(models, out_file)
+rasta.render_to_image(models, out_file)
