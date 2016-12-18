@@ -1,3 +1,9 @@
+"""
+GPGP
+@author Anthony Liu <igliu@mit.edu>
+@version 0.1.0
+"""
+
 import sys
 import math
 import numpy as np
