@@ -11,23 +11,55 @@ def render(camera, model):
     img = Image.fromarray(data, 'RGB')
     draw = ImageDraw.Draw(img, 'RGB')
 
-    # print model
-    for triangle, color, outline in model['triangles']:
+    for face, color, outline in model['faces']:
+        # get the screen coordinates of the vertices
         points = filter(
             lambda x: x is not None,
-            map(lambda t: point_to_pixel(camera, t), triangle)
+            map(lambda f: point_to_pixel(camera, f), face)
         )
         if len(points) < 3:
             continue
+
+        # draw the polygon
         if outline:
             draw.polygon(points, outline=color)
         else:
             draw.polygon(points, fill=color)
+
+        # draw the normal
+        k = 50
+        normal = get_normal(face)
+        center = get_center(face)
+        center_ = np.add(center, k * normal)
+        center_p = point_to_pixel(camera, center.tolist())
+        center_p_ = point_to_pixel(camera, center_.tolist())
+        if center_p is not None and center_p_ is not None:
+            draw.line((
+                center_p[0], center_p[1],
+                center_p_[0], center_p_[1]
+            ), fill=(0, 0, 255), width=2)
+
     del draw
     img.save('out.png', 'PNG')
 
 
+def get_normal(face):
+    v1 = np.subtract(face[1], face[0])
+    v2 = np.subtract(face[2], face[1])
+    normal = np.cross(v1, v2)
+    return normal / np.linalg.norm(normal)
+
+
+def get_center(face):
+    sum = face[0]
+    for i in range(1, len(face)):
+        sum = np.add(sum, face[i])
+    center = sum / float(len(face))
+    return center
+
+
 def point_to_pixel(camera, raw_p):
+    print raw_p
     p = np.array(raw_p + [1])
 
     near_plane_dist = camera['near_plane_dist']
@@ -113,6 +145,8 @@ def parse_camera_file(file_name):
             'near_plane_dist': near_plane_info[0],
             'near_plane_width': near_plane_info[1],
             'near_plane_height': near_plane_info[2],
+            'eye': pos,
+            'at': z_axis,
             'cam_mat': get_camera(pos, z_axis)
         }
     sys.exit('Bad camera file %s' % file_name)
@@ -130,7 +164,7 @@ def parse_point_list(points):
 
 
 def get_box(pos, l, w, h, color=False, outline=False):
-    triangles = []
+    faces = []
     points = [
         [i >> 2, (i >> 1) & 1, i & 1] for i in range(2**3)
     ]
@@ -138,43 +172,37 @@ def get_box(pos, l, w, h, color=False, outline=False):
         [l*a + pos[0], w*b + pos[1], h*c + pos[2]]
         for a, b, c in points
     ]
-    faces = [
+    faces_by_points = [
         [0, 1, 3, 2],  # x-axis
-        [4, 5, 7, 6],  # x-axis
-        [0, 1, 5, 4],  # y-axis
+        [6, 7, 5, 4],  # x-axis
+        [4, 5, 1, 0],  # y-axis
         [2, 3, 7, 6],  # y-axis
         [0, 2, 6, 4],  # z-axis
-        [1, 3, 7, 5]  # z-axis
+        [5, 7, 3, 1]  # z-axis
     ]
-    m = 20
 
-    for face in faces:
-        base_color = tuple([
-            max(min(int(np.random.uniform() * 256), 255), 0)
-            for _ in range(3)
-        ])
-        if not (color is False):
-            base_color = color
-        color1 = tuple([
-            max(min(int(a + m), 255), 0)
-            for a in base_color
-        ])
-        color2 = tuple([
-            max(min(int(a - m), 255), 0)
-            for a in base_color
-        ])
+    for face_by_points in faces_by_points:
+        if color is False:
+            color = tuple([
+                max(min(
+                    int(np.random.uniform() * 256),
+                    255
+                ), 0) for _ in range(3)
+            ])
 
-        pa, pb, pc, pd = [points[x] for x in face]
-        triangles.append(([pa, pb, pc], color1, outline))
-        triangles.append(([pa, pc, pd], color2, outline))
+        faces.append((
+            [points[x] for x in face_by_points],
+            color,
+            outline
+        ))
 
-    return {'triangles': triangles}
+    return {'faces': faces}
 
 
 def merge_models(models):
-    model = {'triangles': []}
+    model = {'faces': []}
     for submodel in models:
-        model['triangles'] += submodel['triangles']
+        model['faces'] += submodel['faces']
     return model
 
 if __name__ == '__main__':
@@ -195,4 +223,4 @@ if __name__ == '__main__':
         outline=True
     )
     model = merge_models([box1, box2])
-    render(camera, model)
+    render(camera, box1)
