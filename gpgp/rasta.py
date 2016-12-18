@@ -1,7 +1,7 @@
 """
 GPGP
 @author Anthony Liu <igliu@mit.edu>
-@version 0.1.0
+@version 0.2.1
 """
 
 import sys
