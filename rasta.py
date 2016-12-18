@@ -4,9 +4,12 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 
-def render(camera, model):
+def render(camera, model, screen_width, screen_height):
     # prep the canvas
-    data = np.zeros((600, 800, 3), dtype=np.uint8)
+    data = np.zeros(
+        (screen_height, screen_width, 3),
+        dtype=np.uint8
+    )
     data.fill(255)
     img = Image.fromarray(data, 'RGB')
     draw = ImageDraw.Draw(img, 'RGB')
@@ -15,7 +18,9 @@ def render(camera, model):
         # get the screen coordinates of the vertices
         points = filter(
             lambda x: x is not None,
-            map(lambda f: point_to_pixel(camera, f), face)
+            map(lambda f: point_to_pixel(
+                camera, f, screen_width, screen_height
+            ), face)
         )
         if len(points) < 3:
             continue
@@ -24,14 +29,15 @@ def render(camera, model):
         center = get_center(face)
         normal = get_normal(face)
 
-        if is_facing(center, camera['eye'], normal):
-            lit_color = get_lit_color(color, normal)
-
-            # draw the polygon
-            if outline:
-                draw.polygon(points, outline=lit_color)
-            else:
-                draw.polygon(points, fill=lit_color)
+        # always draw outlines
+        if outline:
+            draw.polygon(points, outline=color)
+        else:
+            # draw filled polygons if they're facing
+            if is_facing(center, camera['eye'], normal):
+                lit_color = get_lit_color(color, normal)
+                if not outline:
+                    draw.polygon(points, fill=lit_color)
 
     del draw
     img.save('out.png', 'PNG')
@@ -66,17 +72,16 @@ def is_facing(center, eye, normal):
     return np.dot(np.subtract(-center, eye), normal) > 0
 
 
-def point_to_pixel(camera, raw_p):
+def point_to_pixel(camera, raw_p, screen_width, screen_height):
     p = np.array(raw_p + [1])
+    p[2] /= 6.
     p_cam = np.dot(p, camera['cam_mat'])
 
     if -p_cam[2] < camera['near']:
         return None
 
-    p_proj = np.dot(camera['proj_mat'], p_cam)
+    p_proj = np.dot(p_cam, camera['proj_mat'])
     p_proj /= p_proj[3]
-    screen_width = 800
-    screen_height = 600
     x = (p_proj[0] + 1.)/2. * screen_width
     y = (p_proj[1] + 1.)/2. * screen_height
 
@@ -226,9 +231,15 @@ if __name__ == '__main__':
         sys.exit('Usage: %s CAMERA_FILE_NAME' % sys.argv[0])
 
     camera = parse_camera_file(sys.argv[1])
+    boundary = get_box(
+        [-84, -62, 0],
+        168, 126, 100,
+        color=(0, 0, 0),
+        outline=True
+    )
     box1 = get_box(
-        [0, 0, 0],
-        40, 40, 40,
+        [-84, 54, 90],
+        10, 10, 10,
         color=(255, 0, 0),
         outline=False
     )
@@ -238,5 +249,5 @@ if __name__ == '__main__':
         color=(255, 0, 0),
         outline=False
     )
-    model = merge_models([box1, box2])
-    render(camera, model)
+    model = merge_models([boundary, box1])
+    render(camera, model, 800, 600)
