@@ -12,7 +12,7 @@ class Scene(object):
     @classmethod
     def sample(cls, num_boxes):
         # hardcoded range parameters
-        x_range, y_range, z_range  = 13.33333, 10., 10.
+        x_range, y_range, z_range = 13.33333, 10., 10.
 
         # generate the boxes
         boxes = []
@@ -30,11 +30,11 @@ class Scene(object):
         viewer = [
             np.random.normal(viewer_center[0], x_range/16.),
             boxes[target_box][1],
-            np.random.normal(viewer_center[2], z_range/4.),
+            np.random.normal(viewer_center[2], z_range/2.),
             target_box
         ]
-        viewer[0] = max(x_range - 1., min(0, viewer[0]))
-        viewer[2] = max(z_range - 1., min(0, viewer[2]))
+        viewer[0] = min(x_range - 1., max(0, viewer[0]))
+        viewer[2] = min(z_range - 1., max(0, viewer[2]))
 
         return {
             'viewer': viewer,
@@ -43,12 +43,12 @@ class Scene(object):
 
     @classmethod
     def get_model_from_scene(cls, scene):
-        boxes = [Rasta.get_boundary_box()]
+        boxes = []
 
         v1 = scene['boxes'][scene['viewer'][3]]
         v2 = np.subtract(scene['viewer'][0:3], v1)
         v3 = [1, 0, 0]
-        angle = -np.arccos(np.dot(v2, v3) / (
+        angle = np.arccos(np.dot(v2, v3) / (
             np.linalg.norm(v2) * np.linalg.norm(v3)
         ))
         viewer_model = Rasta.rotate_box(
@@ -60,6 +60,7 @@ class Scene(object):
             angle
         )
         viewer_model['faces'][0][1] = (0, 1e6, 0)
+        # broken for some reason
         viewer_model['faces'][1][0] = list(reversed(
             viewer_model['faces'][1][0]
         ))
@@ -70,7 +71,7 @@ class Scene(object):
             boxes.append(Rasta.get_box(
                 box,
                 1, 1, 1,
-                color=(0,0,255)
+                color=(0, 0, 255)
             ))
 
         return boxes

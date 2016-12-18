@@ -33,9 +33,21 @@ class Rasta(object):
         img = Image.fromarray(data, 'RGB')
         draw = ImageDraw.Draw(img, 'RGB')
 
-        # iterate the model faces
+        # merge the models
         model = self.merge_models(models)
-        for face, color, outline in model['faces']:
+
+        # sort the faces of the model
+        sorted_faces = sorted(
+            model['faces'],
+            key=lambda face: -self.get_center(face)[0][2]
+        )
+
+        # add the boundary
+        boundary = self.get_boundary_box()
+        sorted_faces = boundary['faces'] + sorted_faces
+
+        # iterate through the faces and render them
+        for face, color, outline in sorted_faces:
             # apply the global offset
             face = [[
                 self.global_scale[0] * point[0] +
