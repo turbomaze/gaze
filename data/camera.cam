@@ -1,8 +1,8 @@
-# near dist, width, height
-2,160,120
+# near, far, aspect, fovy
+2,1000,1.3333,2.9
 
 # eye
-16,10,5
+16,10,10
 
 # at
 0,0,-1

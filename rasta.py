@@ -68,23 +68,17 @@ def is_facing(center, eye, normal):
 
 def point_to_pixel(camera, raw_p):
     p = np.array(raw_p + [1])
-
-    near_plane_dist = camera['near_plane_dist']
-    near_plane_width = camera['near_plane_width']
-    near_plane_height = camera['near_plane_height']
     p_cam = np.dot(p, camera['cam_mat'])
 
-    if -p_cam[2] < near_plane_dist:
+    if -p_cam[2] < camera['near']:
         return None
 
-    canv_x = -near_plane_dist * p_cam[0] / p_cam[2]
-    canv_y = -near_plane_dist * p_cam[1] / p_cam[2]
+    p_proj = np.dot(camera['proj_mat'], p_cam)
+    p_proj /= p_proj[3]
     screen_width = 800
     screen_height = 600
-    ndc_x = canv_x/near_plane_width + 0.5
-    ndc_y = canv_y/near_plane_height + 0.5
-    x = ndc_x * screen_width
-    y = ndc_y * screen_height
+    x = (p_proj[0] + 1.)/2. * screen_width
+    y = (p_proj[1] + 1.)/2. * screen_height
 
     if x > screen_width or y > screen_height or x < 0 or y < 0:
         return None
@@ -140,21 +134,36 @@ def parse_camera_file(file_name):
         if len(lines) < 3:
             sys.exit('Bad camera file %s' % file_name)
 
-        near_plane_info = parse_point_list(lines[0])[0]
+        camera_info = [float(x) for x in lines[0].split(',')]
         pos = parse_point_list(lines[1])[0]
         z_axis = parse_point_list(lines[2])[0]
-        if near_plane_info is None:
+        if camera_info is None:
             sys.exit('Bad camera file %s' % file_name)
         if pos is None or z_axis is None:
             sys.exit('Bad camera file %s' % file_name)
 
+        # get the projection matrix
+        near = camera_info[0]
+        far = camera_info[1]
+        aspect = camera_info[2]
+        fovy = camera_info[3]
+        cam_mat = get_camera(pos, z_axis)
+        proj_mat = np.array([
+            [1./(aspect*np.tan(fovy/2.)), 0, 0, 0],
+            [0, 1./np.tan(fovy/2.), 0, 0],
+            [0, 0, -far/(far-near), -(near*far)/(far-near)],
+            [0, 0, -1, 0],
+        ])
+
         return {
-            'near_plane_dist': near_plane_info[0],
-            'near_plane_width': near_plane_info[1],
-            'near_plane_height': near_plane_info[2],
+            'near': near,
+            'far': far,
+            'aspect': aspect,
+            'fovy': fovy,
             'eye': pos,
             'at': z_axis,
-            'cam_mat': get_camera(pos, z_axis)
+            'cam_mat': cam_mat,
+            'proj_mat': proj_mat
         }
     sys.exit('Bad camera file %s' % file_name)
 
@@ -229,7 +238,5 @@ if __name__ == '__main__':
         color=(255, 0, 0),
         outline=False
     )
-    print 'fuck'
-    print get_lit_color((255,0,0), [1,0,0])
     model = merge_models([box1, box2])
     render(camera, model)
