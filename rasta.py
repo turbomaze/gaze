@@ -24,28 +24,27 @@ def render(camera, model):
         center = get_center(face)
         normal = get_normal(face)
 
-        # draw the polygon
         if is_facing(center, camera['eye'], normal):
+            lit_color = get_lit_color(color, normal)
+
+            # draw the polygon
             if outline:
-                draw.polygon(points, outline=color)
+                draw.polygon(points, outline=lit_color)
             else:
-                draw.polygon(points, fill=color)
-
-
-        # draw the normal
-        if True:
-            k = 50
-            center_ = np.add(center, k * normal)
-            center_p = point_to_pixel(camera, center.tolist())
-            center_p_ = point_to_pixel(camera, center_.tolist())
-            if center_p is not None and center_p_ is not None:
-                draw.line((
-                    center_p[0], center_p[1],
-                    center_p_[0], center_p_[1]
-                ), fill=(0, 0, 255), width=2)
+                draw.polygon(points, fill=lit_color)
 
     del draw
     img.save('out.png', 'PNG')
+
+def get_lit_color(color, normal):
+    light_1 = np.array([1, 2, 2])
+    lightness_1 = abs(np.dot(normal, light_1))
+    lightness_1 /= np.linalg.norm(light_1)
+    light_2 = np.array([-1, 1, 2])
+    lightness_2 = abs(np.dot(normal, light_2))
+    lightness_2 /= np.linalg.norm(light_2)
+    lightness = (lightness_1 + lightness_2) / 1.8
+    return tuple(int(c * lightness) for c in color)
 
 
 def get_normal(face):
@@ -65,7 +64,6 @@ def get_center(face):
 
 def is_facing(center, eye, normal):
     return np.dot(np.subtract(-center, eye), normal) > 0
-
 
 
 def point_to_pixel(camera, raw_p):
@@ -223,13 +221,15 @@ if __name__ == '__main__':
         [0, 0, 0],
         40, 40, 40,
         color=(255, 0, 0),
-        outline=True
+        outline=False
     )
     box2 = get_box(
         [-70, 20, 10],
         40, 40, 40,
         color=(255, 0, 0),
-        outline=True
+        outline=False
     )
+    print 'fuck'
+    print get_lit_color((255,0,0), [1,0,0])
     model = merge_models([box1, box2])
     render(camera, model)
