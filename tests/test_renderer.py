@@ -13,11 +13,11 @@ boundary = Rasta.get_box(
     outline=True
 )
 models = [boundary]
-models.append(Rasta.get_box(
-    [0, 0, 0],
+models.append(Rasta.rotate_box(Rasta.get_box(
+    [10, 7, 5],
     1, 1, 1,
     color=(255, 0, 0),
     outline=False
-))
+), 3.14/3))
 
 rasta.render(models, out_file)

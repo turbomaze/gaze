@@ -219,6 +219,38 @@ class Rasta(object):
             return None
 
     @classmethod
+    def rotate_box(cls, box, angle):
+        box_ = {'faces': []}
+
+        # construct the rotation matrix about the y-axis
+        rot_mat = np.array([
+            [np.cos(angle), 0, np.sin(angle)],
+            [0, 1, 0],
+            [-np.sin(angle), 0, np.cos(angle)]
+        ])
+
+        # compute the center of the box for shift purposes
+        center = [0, 0, 0]
+        for face in box['faces']:
+            for point in face[0]:
+                center = np.add(center, point)
+        center = center/24.
+
+        # shift, rotate, and unshift all the points
+        for face in box['faces']:
+            points = []
+            for point in face[0]:
+                point_ = np.dot(
+                    rot_mat,
+                    np.subtract(point, center)
+                )
+                points.append(np.add(point_, center))
+            face_ = (points, face[1], face[2])
+            box_['faces'].append(face_)
+
+        return box_
+
+    @classmethod
     def get_box(cls, pos, l, w, h, color=False, outline=False):
         faces = []
         points = [
