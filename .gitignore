@@ -3,3 +3,5 @@ out.png
 tags
 
 */*.pyc
+
+tests/*.png

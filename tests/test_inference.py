@@ -7,19 +7,21 @@ def get_real_loss(a, b):
     sq = np.square(diff)
     return np.sum(sq) ** 0.5
 
-num_trials = 500
-dims = (400, 300)
+num_trials = 1250
+dims = (200, 150)
 root = Tk()
 root.geometry(str(dims[0]) + 'x' + str(dims[1]))
 
 # domain specific
-num_boxes = 2
+num_boxes = 3
 correct = Scene.sample(num_boxes)
-problem = core.GazeProblem(root, dims, num_boxes, radius=20)
+problem = core.GazeProblem(root, dims, num_boxes, radius=14)
 correct_img = problem.get_image(correct)
+correct_img.save('correct.png')
 
 first_guess = Scene.sample(num_boxes)
-print 'First guess: ', first_guess
+print 'Correct: ', map(lambda x: round(x, 1), correct)
+print 'First guess: ', map(lambda x: round(x, 1), first_guess)
 print 'First score: ', get_real_loss(first_guess, correct)
 metropolis = MH(
     problem.get_next,
@@ -31,5 +33,5 @@ guess = metropolis.optimize(
     correct_img, first_guess, trials=num_trials
 )
 
-print 'Guess: ', guess
+print 'Guess: ', map(lambda x: round(x, 1), guess)
 print 'Score: ', get_real_loss(guess, correct)
