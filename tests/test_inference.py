@@ -2,11 +2,6 @@ import numpy as np
 from Tkinter import Tk
 from context import Scene, core, MH
 
-def get_real_loss(a, b):
-    diff = np.subtract(a, b)
-    sq = np.square(diff)
-    return np.sum(sq) ** 0.5
-
 num_trials = 1250
 dims = (200, 150)
 root = Tk()
@@ -22,7 +17,9 @@ correct_img.save('correct.png')
 first_guess = Scene.sample(num_boxes)
 print 'Correct: ', map(lambda x: round(x, 1), correct)
 print 'First guess: ', map(lambda x: round(x, 1), first_guess)
-print 'First score: ', get_real_loss(first_guess, correct)
+print 'First score: ', Scene.get_target_loss(
+    first_guess, correct
+)
 metropolis = MH(
     problem.get_next,
     problem.get_likelihood_func,
@@ -34,4 +31,4 @@ guess = metropolis.optimize(
 )
 
 print 'Guess: ', map(lambda x: round(x, 1), guess)
-print 'Score: ', get_real_loss(guess, correct)
+print 'Score: ', Scene.get_target_loss(guess, correct)

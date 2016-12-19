@@ -145,3 +145,18 @@ class Scene(object):
             ))
 
         return boxes
+
+    @classmethod
+    def get_target_box(cls, latent):
+        box_idx = latent[cls.num_viewer_params-1]
+        box_offset = cls.num_box_params * box_idx
+        offset = cls.num_viewer_params + box_offset
+        return latent[offset:offset + cls.num_box_params]
+
+    @classmethod
+    def get_target_loss(cls, latent_a, latent_b):
+        box_a = cls.get_target_box(latent_a)
+        box_b = cls.get_target_box(latent_b)
+        diff = np.subtract(box_a, box_b)
+        sq = np.square(diff)
+        return np.sum(sq) ** 0.5
