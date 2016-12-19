@@ -1,7 +1,7 @@
 """
 GPGP
 @author Anthony Liu <igliu@mit.edu>
-@version 0.2.1
+@version 0.3.0
 """
 
 import sys
@@ -23,7 +23,7 @@ class Rasta(object):
         self.screen_width = screen_width
         self.screen_height = screen_height
 
-    def render(self, models, out_file):
+    def render(self, models):
         # prep the canvas
         data = np.zeros(
             (self.screen_height, self.screen_width, 3),
@@ -33,9 +33,21 @@ class Rasta(object):
         img = Image.fromarray(data, 'RGB')
         draw = ImageDraw.Draw(img, 'RGB')
 
-        # iterate the model faces
+        # merge the models
         model = self.merge_models(models)
-        for face, color, outline in model['faces']:
+
+        # sort the faces of the model
+        sorted_faces = sorted(
+            model['faces'],
+            key=lambda face: -self.get_center(face)[0][2]
+        )
+
+        # add the boundary
+        boundary = self.get_boundary_box()
+        sorted_faces = boundary['faces'] + sorted_faces
+
+        # iterate through the faces and render them
+        for face, color, outline in sorted_faces:
             # apply the global offset
             face = [[
                 self.global_scale[0] * point[0] +
@@ -73,6 +85,10 @@ class Rasta(object):
                     draw.polygon(points, fill=lit_color)
 
         del draw
+        return img
+
+    def render_to_image(self, models, out_file):
+        img = self.render(models)
         img.save(out_file, 'PNG')
 
     def point_to_pixel(self, raw_p):
@@ -219,6 +235,38 @@ class Rasta(object):
             return None
 
     @classmethod
+    def rotate_box(cls, box, angle):
+        box_ = {'faces': []}
+
+        # construct the rotation matrix about the y-axis
+        rot_mat = np.array([
+            [np.cos(angle), 0, np.sin(angle)],
+            [0, 1, 0],
+            [-np.sin(angle), 0, np.cos(angle)]
+        ])
+
+        # compute the center of the box for shift purposes
+        center = [0, 0, 0]
+        for face in box['faces']:
+            for point in face[0]:
+                center = np.add(center, point)
+        center = center/24.
+
+        # shift, rotate, and unshift all the points
+        for face in box['faces']:
+            points = []
+            for point in face[0]:
+                point_ = np.dot(
+                    rot_mat,
+                    np.subtract(point, center)
+                )
+                points.append(np.add(point_, center))
+            face_ = [points, face[1], face[2]]
+            box_['faces'].append(face_)
+
+        return box_
+
+    @classmethod
     def get_box(cls, pos, l, w, h, color=False, outline=False):
         faces = []
         points = [
@@ -246,16 +294,29 @@ class Rasta(object):
                     ), 0) for _ in range(3)
                 ])
 
-            faces.append((
+            faces.append([
                 [points[x] for x in face_by_points],
                 color,
                 outline
-            ))
+            ])
 
         return {'faces': faces}
 
     @classmethod
+    def get_boundary_box(cls):
+        boundary = Rasta.get_box(
+            [0, 0, 0],
+            13.3333, 10, 10,
+            color=(0, 0, 0),
+            outline=True
+        )
+        return boundary
+
+    @classmethod
     def merge_models(cls, models):
+        if not isinstance(models, type([])):
+            return models
+
         model = {'faces': []}
         for submodel in models:
             model['faces'] += submodel['faces']
