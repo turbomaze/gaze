@@ -1,4 +1,9 @@
-import numpy as np
+"""
+GPGP
+@author Anthony Liu <igliu@mit.edu>
+@version 0.3.0
+"""
+
 import random
 import time
 

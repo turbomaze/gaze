@@ -1,7 +1,7 @@
 """
 GPGP
 @author Anthony Liu <igliu@mit.edu>
-@version 0.2.1
+@version 0.3.0
 """
 
 from context import Rasta

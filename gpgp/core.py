@@ -1,3 +1,9 @@
+"""
+GPGP
+@author Anthony Liu <igliu@mit.edu>
+@version 0.3.0
+"""
+
 import numpy as np
 from context import Rasta, Scene
 from Tkinter import Label
