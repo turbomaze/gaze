@@ -1,8 +1,7 @@
-import numpy as np
 from Tkinter import Tk
 from context import Scene, core, MH
 
-num_trials = 1250
+num_samples = 250
 dims = (200, 150)
 root = Tk()
 root.geometry(str(dims[0]) + 'x' + str(dims[1]))
@@ -27,7 +26,7 @@ metropolis = MH(
     lambda x: problem.render(problem.get_image(x), x)
 )
 guess = metropolis.optimize(
-    correct_img, first_guess, trials=num_trials
+    correct_img, first_guess, samples=num_samples, do_log=True
 )
 
 print 'Guess: ', map(lambda x: round(x, 1), guess)

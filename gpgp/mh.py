@@ -18,7 +18,7 @@ class MH(object):
         self.q = q
         self.progress = progress
 
-    def optimize(self, goal_img, x_0, trials):
+    def optimize(self, goal_img, x_0, samples, do_log=False):
         start = time.clock()
         pi = self.pi_maker(goal_img)
 
@@ -31,8 +31,8 @@ class MH(object):
         # keep track of the most likely state
         x_max = x
         post_max = post_x
-        for i in range(trials):
-            if i % 5 == 0:
+        for i in range(samples):
+            if do_log and i % 5 == 0:
                 print i, round(post_max, 6), map(
                     lambda x: round(x, 1),
                     x_max
@@ -62,5 +62,6 @@ class MH(object):
 
         end = time.clock()
         duration = end - start
-        print str(trials) + ' trials in ' + str(duration) + 's'
+        if do_log:
+            print '%d trials in %fs' % (trials, duration)
         return x_max
