@@ -1,7 +1,7 @@
 """
 Gaze
 @author Anthony Liu <igliu@mit.edu>
-@version 1.0.1
+@version 1.1.0
 """
 
 import sys
