@@ -23,7 +23,8 @@ metropolis = MH(
     problem.get_next,
     problem.get_likelihood_func,
     problem.get_prior_prob,
-    lambda x: problem.render(problem.get_image(x), x)
+    lambda x: problem.render(problem.get_image(x), x),
+    elite=True
 )
 guess = metropolis.optimize(
     correct_img, first_guess, samples=num_samples, do_log=True

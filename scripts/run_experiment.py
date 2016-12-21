@@ -13,6 +13,8 @@ if len(sys.argv) < 4:
     print 'Must supply number of rounds'
 if len(sys.argv) < 5:
     print 'Must supply number of samples (per inference)'
+if len(sys.argv) < 6:
+    print 'Must supply whether or not to use elitism'
     sys.exit(0)
 
 start = time.clock()
@@ -22,6 +24,7 @@ root_dir = sys.argv[1]
 num_boxes = int(sys.argv[2])
 num_rounds = int(sys.argv[3])
 num_samples = int(sys.argv[4])
+use_elitism = int(sys.argv[5]) == 1
 dims = (200, 150)
 experiment_id = np.base_repr(int(9**4 * np.random.rand()), 36)
 
@@ -39,7 +42,8 @@ metropolis = MH(
     problem.get_next,
     problem.get_likelihood_func,
     problem.get_prior_prob,
-    lambda x: x
+    lambda x: x,
+    elite=use_elitism
 )
 
 # run through all the rounds
@@ -83,7 +87,7 @@ cPickle.dump(results, open(results_name, 'wb'))
 duration = time.clock() - start
 average_score = sum(r['guess_score'] for r in results)
 average_score /= float(len(results))
-print '\n%d rounds of %d samples each in %fs' % (
-    num_rounds, num_samples, duration
+print '\nExperiment %s: %d rounds of %d samples in %fs' % (
+    experiment_id, num_rounds, num_samples, duration
 )
 print 'Average score: %f' % average_score
