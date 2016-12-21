@@ -19,6 +19,10 @@ summaries = map(lambda result: {
     ),
     'score': round(result['guess_score'], 2)
 }, results)
-for summary in summaries:
+
+print 'Num samples: %d' % results[0]['num_samples']
+print 'Num rounds: %d' % len(results)
+for i, summary in enumerate(summaries):
+    print 'Round %d' % i
     print summary
 
