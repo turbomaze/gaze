@@ -22,6 +22,7 @@ summaries = map(lambda result: {
 
 print 'Num samples: %d' % results[0]['num_samples']
 print 'Num rounds: %d' % len(results)
-for summary in summaries:
+for i, summary in enumerate(summaries):
+    print 'Round %d' % i
     print summary
 
