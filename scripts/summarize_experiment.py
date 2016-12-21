@@ -19,6 +19,9 @@ summaries = map(lambda result: {
     ),
     'score': round(result['guess_score'], 2)
 }, results)
+
+print 'Num samples: %d' % results[0]['num_samples']
+print 'Num rounds: %d' % len(results)
 for summary in summaries:
     print summary
 
