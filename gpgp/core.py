@@ -1,7 +1,7 @@
 """
 GPGP
 @author Anthony Liu <igliu@mit.edu>
-@version 0.3.0
+@version 1.0.0
 """
 
 import numpy as np
@@ -215,5 +215,35 @@ class GazeProblem(object):
 
         return get_likelihood
 
-    def get_prior_prob(self, x):
-        return 1.
+    def get_prior_prob(self, latent):
+        def eval_gaussian(mu, stdev, x):
+            coeff = 1./(stdev * (2*np.pi)**0.5)
+            exp_coeff = -1./(2 * stdev**2)
+            return coeff * np.e ** (exp_coeff * (x - mu)**2)
+
+        prob = 1.
+        for i, z in enumerate(latent):
+            if i == 0:
+                prob *= eval_gaussian(
+                    0.75 * Scene.x_range,
+                    Scene.x_range/16.,
+                    z
+                )
+            elif i == 1:
+                prob *= eval_gaussian(
+                    Scene.z_range/2.,
+                    Scene.z_range/4.,
+                    z
+                )
+            elif i == 2:
+                prob *= 1./self.num_boxes
+            else:
+                idx_in_box = i - Scene.num_viewer_params
+                idx_in_box = idx_in_box % Scene.num_box_params
+                if idx_in_box == 0:
+                    prob *= 1./(Scene.x_range/2. - 1.)
+                elif idx_in_box == 0:
+                    prob *= 1./(Scene.y_range - 1.)
+                elif idx_in_box == 0:
+                    prob *= 1./(Scene.z_range - 1.)
+        return prob
