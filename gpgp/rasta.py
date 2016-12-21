@@ -1,7 +1,7 @@
 """
-GPGP
+Gaze
 @author Anthony Liu <igliu@mit.edu>
-@version 1.0.0
+@version 1.0.1
 """
 
 import sys
